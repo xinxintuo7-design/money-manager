@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>经销商资金管理系统</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <script>
+        const CONFIG = {
+            APP_ID: 'cli_a92c65188778dbc4',
+            APP_SECRET: 'pW9MLl5pqRaAksKuyZRtUdOOiB2wgrof', 
+            BASE_TOKEN: 'HT8hbDug1aalOEslDBfc2KQgnmb',
+            TABLES: {
+                USER: 'tblSKgu3DkAo8X5g',     // 客户档案
+                BALANCE: 'tbl8oK0Zl6TzsAE6',   // 账户余额
+                HISTORY: 'tblQsicFFJUZVAQR'    // 变动明细
+            }
+        };
+    </script>
+
+    <div id="loginSection" class="flex items-center justify-center h-screen">
+        <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-md">
+            <h1 class="text-2xl font-bold text-center mb-6 text-blue-600">经销商系统登录</h1>
+            <div class="space-y-4">
+                <input type="text" id="username" placeholder="数字账号" class="w-full p-3 border rounded-lg focus:outline-blue-500">
+                <input type="password" id="password" placeholder="密码" class="w-full p-3 border rounded-lg focus:outline-blue-500">
+                <button onclick="handleLogin()" id="loginBtn" class="w-full bg-blue-600 text-white p-3 rounded-lg font-bold hover:bg-blue-700 transition">立即登录</button>
+            </div>
+            <p id="loginMsg" class="mt-4 text-center text-red-500 hidden"></p>
+        </div>
+    </div>
+
+    <div id="mainSection" class="hidden container mx-auto p-4 max-w-4xl">
+        <header class="flex justify-between items-center mb-6">
+            <h2 class="text-xl font-bold text-gray-800">欢迎，<span id="displayName">--</span></h2>
+            <button onclick="location.reload()" class="bg-gray-200 px-4 py-2 rounded-lg text-sm">退出登录</button>
+        </header>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            <div class="bg-blue-500 p-4 rounded-xl text-white shadow-md">
+                <p class="text-xs opacity-80">货款账户余额</p>
+                <p class="text-xl font-bold" id="bal_huokuan">¥0.00</p>
+            </div>
+            <div class="bg-green-500 p-4 rounded-xl text-white shadow-md">
+                <p class="text-xs opacity-80">返利账户余额</p>
+                <p class="text-xl font-bold" id="bal_fanli">¥0.00</p>
+            </div>
+            <div class="bg-purple-500 p-4 rounded-xl text-white shadow-md">
+                <p class="text-xs opacity-80">核销余额(金额)</p>
+                <p class="text-xl font-bold" id="bal_hexiao_cash">¥0.00</p>
+            </div>
+            <div class="bg-orange-500 p-4 rounded-xl text-white shadow-md">
+                <p class="text-xs opacity-80">核销余额(货返)</p>
+                <p class="text-xl font-bold" id="bal_hexiao_goods">0 件</p>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-md overflow-hidden">
+            <div class="p-4 border-b bg-gray-50 font-bold">资金变动明细</div>
+            <div id="historyList" class="divide-y max-h-96 overflow-y-auto">
+                <p class="p-8 text-center text-gray-400">正在加载明细...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentUser = null;
+
+        async function getTenantToken() {
+            const res = await fetch('https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ app_id: CONFIG.APP_ID, app_secret: CONFIG.APP_SECRET })
+            });
+            const data = await res.json();
+            return data.tenant_access_token;
+        }
+
+        async function handleLogin() {
+            const user = document.getElementById('username').value.trim();
+            const pass = document.getElementById('password').value.trim();
+            const btn = document.getElementById('loginBtn');
+            const msg = document.getElementById('loginMsg');
+
+            if(!user || !pass) {
+                msg.innerText = '请填写账号和密码';
+                msg.classList.remove('hidden');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerText = '验证中...';
+
+            try {
+                const token = await getTenantToken();
+                const res = await fetch(`https://open.feishu.cn/open-apis/bitable/v1/apps/${CONFIG.BASE_TOKEN}/tables/${CONFIG.TABLES.USER}/records/search`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        filter: `CurrentValue.[账号] == "${user}" && CurrentValue.[密码] == "${pass}"` 
+                    })
+                });
+                const data = await res.json();
+                
+                if (data.data && data.data.items && data.data.items.length > 0) {
+                    currentUser = data.data.items[0].fields;
+                    showDashboard(token);
+                } else {
+                    msg.innerText = '账号或密码不匹配，请核对表格数据';
+                    msg.classList.remove('hidden');
+                }
+            } catch (e) {
+                msg.innerText = '网络请求异常，请检查开发者后台域名白名单';
+                msg.classList.remove('hidden');
+            } finally {
+                btn.disabled = false;
+                btn.innerText = '立即登录';
+            }
+        }
+
+        async function showDashboard(token) {
+            document.getElementById('loginSection').classList.add('hidden');
+            document.getElementById('mainSection').classList.remove('hidden');
+            document.getElementById('displayName').innerText = currentUser['客户名称'];
+
+            try {
+                // 1. 获取余额
+                const balRes = await fetch(`https://open.feishu.cn/open-apis/bitable/v1/apps/${CONFIG.BASE_TOKEN}/tables/${CONFIG.TABLES.BALANCE}/records/search`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ filter: `CurrentValue.[客户ID] == "${currentUser['客户ID']}"` })
+                });
+                const balData = await balRes.json();
+                
+                if (balData.data && balData.data.items?.[0]) {
+                    const f = balData.data.items[0].fields;
+                    // 使用表格中的全角括号
+                    document.getElementById('bal_huokuan').innerText = `¥${(f['货款账户余额'] || 0).toLocaleString()}`;
+                    document.getElementById('bal_fanli').innerText = `¥${(f['返利账户余额'] || 0).toLocaleString()}`;
+                    document.getElementById('bal_hexiao_cash').innerText = `¥${(f['核销账户余额（金额）'] || 0).toLocaleString()}`;
+                    document.getElementById('bal_hexiao_goods').innerText = `${f['核销账户余额（货返）'] || 0} 件`;
+                }
+
+                // 2. 获取流水
+                const histRes = await fetch(`https://open.feishu.cn/open-apis/bitable/v1/apps/${CONFIG.BASE_TOKEN}/tables/${CONFIG.TABLES.HISTORY}/records/search`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ filter: `CurrentValue.[客户ID] == "${currentUser['客户ID']}"` })
+                });
+                const histData = await histRes.json();
+                const listHtml = histData.data.items?.map(item => `
+                    <div class="p-4 flex justify-between items-center">
+                        <div>
+                            <p class="font-bold text-gray-700">${item.fields['出入账类型'] || '变动'}</p>
+                            <p class="text-xs text-gray-400">${item.fields['出入账时间'] ? new Date(item.fields['出入账时间']).toLocaleString() : '--'}</p>
+                        </div>
+                        <div class="font-mono font-bold ${item.fields['出入账数值'] >= 0 ? 'text-green-600' : 'text-red-600'}">
+                            ${item.fields['出入账数值'] >= 0 ? '+' : ''}${item.fields['出入账数值'] || 0}
+                        </div>
+                    </div>
+                `).join('') || '<p class="p-8 text-center text-gray-400">暂无变动明细</p>';
+                document.getElementById('historyList').innerHTML = listHtml;
+            } catch (e) {
+                console.error(e);
+            }
+        }
+    </script>
+</body>
+</html>
