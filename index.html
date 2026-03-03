@@ -1,572 +1,572 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>经销商资金管理系统</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- 飞书 JS-SDK -->
-    <script src="https://open.fs.cn/static/js/js-sdk-1.5.21.js"></script>
-    <style>
-        /* 加载动画 */
-        .loading-spinner {
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #3b82f6;
-            border-radius: 50%;
-            width: 24px;
-            height: 24px;
-            animation: spin 1s linear infinite;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        /* 淡入动画 */
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        
-        .fade-in {
-            animation: fadeIn 0.3s ease-out;
-        }
-    </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>经销商资金管理系统</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 飞书 JS-SDK -->
+   <script src="https://open.feishu.cn/static/api/js/lark-open-api-1.5.21.js"></script>
+    <style>
+        /* 加载动画 */
+        .loading-spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3b82f6;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* 淡入动画 */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.3s ease-out;
+        }
+    </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
-    <script>
-        // 飞书应用配置
-        const CONFIG = {
-            APP_ID: 'cli_a92c65188778dbc4',
-            APP_SECRET: 'pW9MLl5pqRaAksKuyZRtUdOOiB2wgrof',
-            BASE_TOKEN: 'HT8hbDug1aalOEslDBfc2KQgnmb',
-            TABLES: {
-                USER: 'tblSKgu3DkAo8X5g',      // 客户档案
-                BALANCE: 'tbl8oK0Zl6TzsAE6',   // 账户余额
-                HISTORY: 'tblQsicFFJUZVAQR'    // 变动明细
-            }
-        };
-        
-        // 全局变量
-        let currentUser = null;
-        let tenantToken = null;
-        let tokenExpiry = null;
-    </script>
+    <script>
+        // 飞书应用配置
+        const CONFIG = {
+            APP_ID: 'cli_a92c65188778dbc4',
+            APP_SECRET: 'pW9MLl5pqRaAksKuyZRtUdOOiB2wgrof',
+            BASE_TOKEN: 'HT8hbDug1aalOEslDBfc2KQgnmb',
+            TABLES: {
+                USER: 'tblSKgu3DkAo8X5g',      // 客户档案
+                BALANCE: 'tbl8oK0Zl6TzsAE6',   // 账户余额
+                HISTORY: 'tblQsicFFJUZVAQR'    // 变动明细
+            }
+        };
+        
+        // 全局变量
+        let currentUser = null;
+        let tenantToken = null;
+        let tokenExpiry = null;
+    </script>
 
-    <!-- 登录页面 -->
-    <div id="loginSection" class="flex items-center justify-center h-screen fade-in">
-        <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-md">
-            <h1 class="text-2xl font-bold text-center mb-6 text-blue-600">经销商系统登录</h1>
-            <div class="space-y-4">
-                <input type="text" id="username" placeholder="数字账号" 
-                       class="w-full p-3 border rounded-lg focus:outline-blue-500 focus:ring-2 focus:ring-blue-300">
-                <input type="password" id="password" placeholder="密码" 
-                       class="w-full p-3 border rounded-lg focus:outline-blue-500 focus:ring-2 focus:ring-blue-300">
-                <button onclick="handleLogin()" id="loginBtn" 
-                        class="w-full bg-blue-600 text-white p-3 rounded-lg font-bold hover:bg-blue-700 transition flex justify-center items-center">
-                    <span id="loginBtnText">立即登录</span>
-                    <div id="loginSpinner" class="hidden loading-spinner ml-2"></div>
-                </button>
-            </div>
-            <p id="loginMsg" class="mt-4 text-center text-red-500 hidden"></p>
-            <div class="mt-4 text-center text-sm text-gray-500">
-                <p>使用飞书多维表格中的客户档案进行身份验证</p>
-            </div>
-        </div>
-    </div>
+    <!-- 登录页面 -->
+    <div id="loginSection" class="flex items-center justify-center h-screen fade-in">
+        <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-md">
+            <h1 class="text-2xl font-bold text-center mb-6 text-blue-600">经销商系统登录</h1>
+            <div class="space-y-4">
+                <input type="text" id="username" placeholder="数字账号" 
+                       class="w-full p-3 border rounded-lg focus:outline-blue-500 focus:ring-2 focus:ring-blue-300">
+                <input type="password" id="password" placeholder="密码" 
+                       class="w-full p-3 border rounded-lg focus:outline-blue-500 focus:ring-2 focus:ring-blue-300">
+                <button onclick="handleLogin()" id="loginBtn" 
+                        class="w-full bg-blue-600 text-white p-3 rounded-lg font-bold hover:bg-blue-700 transition flex justify-center items-center">
+                    <span id="loginBtnText">立即登录</span>
+                    <div id="loginSpinner" class="hidden loading-spinner ml-2"></div>
+                </button>
+            </div>
+            <p id="loginMsg" class="mt-4 text-center text-red-500 hidden"></p>
+            <div class="mt-4 text-center text-sm text-gray-500">
+                <p>使用飞书多维表格中的客户档案进行身份验证</p>
+            </div>
+        </div>
+    </div>
 
-    <!-- 主页面 -->
-    <div id="mainSection" class="hidden container mx-auto p-4 max-w-4xl fade-in">
-        <!-- 顶部导航 -->
-        <header class="flex justify-between items-center mb-6">
-            <div>
-                <h2 class="text-xl font-bold text-gray-800">欢迎，<span id="displayName">--</span></h2>
-                <p class="text-sm text-gray-500">客户ID: <span id="customerId">--</span></p>
-            </div>
-            <div class="flex space-x-2">
-                <button onclick="refreshData()" id="refreshBtn" 
-                        class="bg-blue-100 text-blue-700 px-4 py-2 rounded-lg text-sm hover:bg-blue-200 transition flex items-center">
-                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-                    </svg>
-                    <span id="refreshBtnText">刷新</span>
-                    <div id="refreshSpinner" class="hidden loading-spinner ml-1"></div>
-                </button>
-                <button onclick="location.reload()" 
-                        class="bg-gray-200 px-4 py-2 rounded-lg text-sm hover:bg-gray-300 transition">
-                    退出登录
-                </button>
-            </div>
-        </header>
+    <!-- 主页面 -->
+    <div id="mainSection" class="hidden container mx-auto p-4 max-w-4xl fade-in">
+        <!-- 顶部导航 -->
+        <header class="flex justify-between items-center mb-6">
+            <div>
+                <h2 class="text-xl font-bold text-gray-800">欢迎，<span id="displayName">--</span></h2>
+                <p class="text-sm text-gray-500">客户ID: <span id="customerId">--</span></p>
+            </div>
+            <div class="flex space-x-2">
+                <button onclick="refreshData()" id="refreshBtn" 
+                        class="bg-blue-100 text-blue-700 px-4 py-2 rounded-lg text-sm hover:bg-blue-200 transition flex items-center">
+                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                    </svg>
+                    <span id="refreshBtnText">刷新</span>
+                    <div id="refreshSpinner" class="hidden loading-spinner ml-1"></div>
+                </button>
+                <button onclick="location.reload()" 
+                        class="bg-gray-200 px-4 py-2 rounded-lg text-sm hover:bg-gray-300 transition">
+                    退出登录
+                </button>
+            </div>
+        </header>
 
-        <!-- 余额看板 -->
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-            <div class="bg-blue-500 p-4 rounded-xl text-white shadow-md hover:shadow-lg transition">
-                <p class="text-xs opacity-80">货款账户余额</p>
-                <p class="text-xl font-bold" id="bal_huokuan">¥0.00</p>
-                <p class="text-xs mt-1 opacity-80">可用货款金额</p>
-            </div>
-            <div class="bg-green-500 p-4 rounded-xl text-white shadow-md hover:shadow-lg transition">
-                <p class="text-xs opacity-80">返利账户余额</p>
-                <p class="text-xl font-bold" id="bal_fanli">¥0.00</p>
-                <p class="text-xs mt-1 opacity-80">累计返利金额</p>
-            </div>
-            <div class="bg-purple-500 p-4 rounded-xl text-white shadow-md hover:shadow-lg transition">
-                <p class="text-xs opacity-80">核销余额(金额)</p>
-                <p class="text-xl font-bold" id="bal_hexiao_cash">¥0.00</p>
-                <p class="text-xs mt-1 opacity-80">金额核销余额</p>
-            </div>
-            <div class="bg-orange-500 p-4 rounded-xl text-white shadow-md hover:shadow-lg transition">
-                <p class="text-xs opacity-80">核销余额(货返)</p>
-                <p class="text-xl font-bold" id="bal_hexiao_goods">0 件</p>
-                <p class="text-xs mt-1 opacity-80">货返核销余额</p>
-            </div>
-        </div>
+        <!-- 余额看板 -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            <div class="bg-blue-500 p-4 rounded-xl text-white shadow-md hover:shadow-lg transition">
+                <p class="text-xs opacity-80">货款账户余额</p>
+                <p class="text-xl font-bold" id="bal_huokuan">¥0.00</p>
+                <p class="text-xs mt-1 opacity-80">可用货款金额</p>
+            </div>
+            <div class="bg-green-500 p-4 rounded-xl text-white shadow-md hover:shadow-lg transition">
+                <p class="text-xs opacity-80">返利账户余额</p>
+                <p class="text-xl font-bold" id="bal_fanli">¥0.00</p>
+                <p class="text-xs mt-1 opacity-80">累计返利金额</p>
+            </div>
+            <div class="bg-purple-500 p-4 rounded-xl text-white shadow-md hover:shadow-lg transition">
+                <p class="text-xs opacity-80">核销余额(金额)</p>
+                <p class="text-xl font-bold" id="bal_hexiao_cash">¥0.00</p>
+                <p class="text-xs mt-1 opacity-80">金额核销余额</p>
+            </div>
+            <div class="bg-orange-500 p-4 rounded-xl text-white shadow-md hover:shadow-lg transition">
+                <p class="text-xs opacity-80">核销余额(货返)</p>
+                <p class="text-xl font-bold" id="bal_hexiao_goods">0 件</p>
+                <p class="text-xs mt-1 opacity-80">货返核销余额</p>
+            </div>
+        </div>
 
-        <!-- 流水列表 -->
-        <div class="bg-white rounded-xl shadow-md overflow-hidden">
-            <div class="p-4 border-b bg-gray-50 font-bold flex justify-between items-center">
-                <span>资金变动明细</span>
-                <span class="text-sm font-normal text-gray-500" id="historyCount">共 -- 条记录</span>
-            </div>
-            <div id="historyList" class="divide-y max-h-96 overflow-y-auto">
-                <div class="p-8 text-center">
-                    <div class="loading-spinner mx-auto"></div>
-                    <p class="mt-2 text-gray-400">正在加载明细...</p>
-                </div>
-            </div>
-        </div>
-        
-        <!-- 底部信息 -->
-        <div class="mt-6 text-center text-sm text-gray-500">
-            <p>最后更新: <span id="lastUpdate">--</span></p>
-            <p class="mt-1">系统版本: v1.0 | 使用飞书JS-SDK</p>
-        </div>
-    </div>
+        <!-- 流水列表 -->
+        <div class="bg-white rounded-xl shadow-md overflow-hidden">
+            <div class="p-4 border-b bg-gray-50 font-bold flex justify-between items-center">
+                <span>资金变动明细</span>
+                <span class="text-sm font-normal text-gray-500" id="historyCount">共 -- 条记录</span>
+            </div>
+            <div id="historyList" class="divide-y max-h-96 overflow-y-auto">
+                <div class="p-8 text-center">
+                    <div class="loading-spinner mx-auto"></div>
+                    <p class="mt-2 text-gray-400">正在加载明细...</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 底部信息 -->
+        <div class="mt-6 text-center text-sm text-gray-500">
+            <p>最后更新: <span id="lastUpdate">--</span></p>
+            <p class="mt-1">系统版本: v1.0 | 使用飞书JS-SDK</p>
+        </div>
+    </div>
 
-    <!-- 错误提示 -->
-    <div id="errorModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-            <div class="mt-3">
-                <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
-                    <svg class="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
-                </div>
-                <h3 class="text-lg font-medium text-gray-900 mt-4" id="errorTitle">发生错误</h3>
-                <div class="mt-2 px-7 py-3">
-                    <p class="text-sm text-gray-500" id="errorMessage"></p>
-                </div>
-                <div class="items-center px-4 py-3">
-                    <button onclick="hideError()" 
-                            class="px-4 py-2 bg-blue-600 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        确定
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
+    <!-- 错误提示 -->
+    <div id="errorModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
+                    <svg class="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+                <h3 class="text-lg font-medium text-gray-900 mt-4" id="errorTitle">发生错误</h3>
+                <div class="mt-2 px-7 py-3">
+                    <p class="text-sm text-gray-500" id="errorMessage"></p>
+                </div>
+                <div class="items-center px-4 py-3">
+                    <button onclick="hideError()" 
+                            class="px-4 py-2 bg-blue-600 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        确定
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    <script>
-        // ==================== 工具函数 ====================
-        
-        // 显示错误
-        function showError(title, message) {
-            document.getElementById('errorTitle').textContent = title;
-            document.getElementById('errorMessage').textContent = message;
-            document.getElementById('errorModal').classList.remove('hidden');
-        }
-        
-        // 隐藏错误
-        function hideError() {
-            document.getElementById('errorModal').classList.add('hidden');
-        }
-        
-        // 格式化金额
-        function formatCurrency(amount) {
-            if (amount === null || amount === undefined || isNaN(amount)) return '¥0.00';
-            return '¥' + amount.toLocaleString('zh-CN', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-            });
-        }
-        
-        // 格式化日期
-        function formatDate(dateString) {
-            if (!dateString) return '--';
-            try {
-                const date = new Date(dateString);
-                return date.toLocaleString('zh-CN', {
-                    year: 'numeric',
-                    month: '2-digit',
-                    day: '2-digit',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                });
-            } catch (e) {
-                return dateString;
-            }
-        }
-        
-        // 更新最后更新时间
-        function updateLastUpdateTime() {
-            const now = new Date();
-            document.getElementById('lastUpdate').textContent = now.toLocaleString('zh-CN');
-        }
-        
-        // ==================== 飞书 API 函数 ====================
-        
-        // 使用飞书 SDK 的 tt.request 发送请求
-        async function feishuRequest(url, options = {}) {
-            return new Promise((resolve, reject) => {
-                // 检查是否在飞书环境中
-                if (typeof tt !== 'undefined' && tt.request) {
-                    // 在飞书环境中使用 tt.request
-                    tt.request({
-                        url: url,
-                        method: options.method || 'GET',
-                        header: options.headers || {},
-                        data: options.body ? JSON.parse(options.body) : {},
-                        success: (res) => {
-                            if (res.statusCode >= 200 && res.statusCode < 300) {
-                                try {
-                                    const data = typeof res.data === 'string' ? JSON.parse(res.data) : res.data;
-                                    resolve(data);
-                                } catch (e) {
-                                    resolve(res.data);
-                                }
-                            } else {
-                                reject(new Error(`请求失败: ${res.statusCode}`));
-                            }
-                        },
-                        fail: (err) => {
-                            reject(new Error(`网络请求失败: ${err.errMsg || '未知错误'}`));
-                        }
-                    });
-                } else {
-                    // 不在飞书环境中，使用 fetch（仅用于开发测试）
-                    console.warn('不在飞书环境中，使用fetch（可能遇到CORS问题）');
-                    fetch(url, options)
-                        .then(response => {
-                            if (!response.ok) {
-                                throw new Error(`HTTP error! status: ${response.status}`);
-                            }
-                            return response.json();
-                        })
-                        .then(data => resolve(data))
-                        .catch(error => reject(error));
-                }
-            });
-        }
-        
-        // 获取租户访问令牌
-        async function getTenantToken() {
-            // 检查令牌是否有效（提前5分钟过期）
-            if (tenantToken && tokenExpiry && Date.now() < tokenExpiry) {
-                return tenantToken;
-            }
-            
-            try {
-                const data = await feishuRequest('https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        app_id: CONFIG.APP_ID,
-                        app_secret: CONFIG.APP_SECRET
-                    })
-                });
-                
-                if (data.code === 0) {
-                    tenantToken = data.tenant_access_token;
-                    // 令牌有效期设置为提前5分钟过期
-                    tokenExpiry = Date.now() + (data.expire - 300) * 1000;
-                    return tenantToken;
-                } else {
-                    throw new Error(`获取访问令牌失败: ${data.msg}`);
-                }
-            } catch (error) {
-                console.error('获取访问令牌错误:', error);
-                throw error;
-            }
-        }
-        
-        // 查询表格记录（使用飞书多维表格搜索API）
-        async function searchTableRecords(tableId, filter) {
-            try {
-                const token = await getTenantToken();
-                
-                const data = await feishuRequest(
-                    `https://open.feishu.cn/open-apis/bitable/v1/apps/${CONFIG.BASE_TOKEN}/tables/${tableId}/records/search`,
-                    {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': `Bearer ${token}`,
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            filter: filter
-                        })
-                    }
-                );
-                
-                if (data.code === 0) {
-                    return data.data.items || [];
-                } else {
-                    throw new Error(`查询表格记录失败: ${data.msg}`);
-                }
-            } catch (error) {
-                console.error('查询表格记录错误:', error);
-                throw error;
-            }
-        }
-        
-        // ==================== 业务逻辑函数 ====================
-        
-        // 处理登录
-        async function handleLogin() {
-            const username = document.getElementById('username').value.trim();
-            const password = document.getElementById('password').value.trim();
-            const loginBtn = document.getElementById('loginBtn');
-            const loginBtnText = document.getElementById('loginBtnText');
-            const loginSpinner = document.getElementById('loginSpinner');
-            const loginMsg = document.getElementById('loginMsg');
-            
-            // 验证输入
-            if (!username || !password) {
-                loginMsg.textContent = '请填写账号和密码';
-                loginMsg.classList.remove('hidden');
-                return;
-            }
-            
-            // 设置加载状态
-            loginBtn.disabled = true;
-            loginBtnText.textContent = '验证中...';
-            loginSpinner.classList.remove('hidden');
-            loginMsg.classList.add('hidden');
-            
-            try {
-                // 获取访问令牌
-                await getTenantToken();
-                
-                // 构建筛选条件 - 注意字段名必须与表格中的完全一致
-                // 假设表格中的字段名为："账号" 和 "密码"（使用全角括号）
-                const filter = `CurrentValue.[账号] == "${username}" && CurrentValue.[密码] == "${password}"`;
-                
-                // 查询用户记录
-                const users = await searchTableRecords(CONFIG.TABLES.USER, filter);
-                
-                if (users.length > 0) {
-                    currentUser = users[0].fields;
-                    await showDashboard();
-                } else {
-                    loginMsg.textContent = '账号或密码不匹配，请核对表格数据';
-                    loginMsg.classList.remove('hidden');
-                }
-            } catch (error) {
-                console.error('登录错误:', error);
-                loginMsg.textContent = `登录失败: ${error.message}`;
-                loginMsg.classList.remove('hidden');
-            } finally {
-                // 恢复按钮状态
-                loginBtn.disabled = false;
-                loginBtnText.textContent = '立即登录';
-                loginSpinner.classList.add('hidden');
-            }
-        }
-        
-        // 显示主面板
-        async function showDashboard() {
-            // 切换页面
-            document.getElementById('loginSection').classList.add('hidden');
-            document.getElementById('mainSection').classList.remove('hidden');
-            
-            // 显示用户信息
-            document.getElementById('displayName').textContent = currentUser['客户名称'] || '用户';
-            document.getElementById('customerId').textContent = currentUser['客户ID'] || '--';
-            
-            // 加载数据
-            await refreshData();
-        }
-        
-        // 刷新数据
-        async function refreshData() {
-            const refreshBtn = document.getElementById('refreshBtn');
-            const refreshBtnText = document.getElementById('refreshBtnText');
-            const refreshSpinner = document.getElementById('refreshSpinner');
-            
-            // 设置加载状态
-            refreshBtn.disabled = true;
-            refreshBtnText.textContent = '刷新中...';
-            refreshSpinner.classList.remove('hidden');
-            
-            try {
-                if (!currentUser || !currentUser['客户ID']) {
-                    throw new Error('用户信息不完整');
-                }
-                
-                const customerId = currentUser['客户ID'];
-                
-                // 1. 获取余额数据
-                const balanceFilter = `CurrentValue.[客户ID] == "${customerId}"`;
-                const balanceRecords = await searchTableRecords(CONFIG.TABLES.BALANCE, balanceFilter);
-                
-                if (balanceRecords.length > 0) {
-                    const balance = balanceRecords[0].fields;
-                    
-                    // 更新余额显示 - 注意字段名必须与表格中的完全一致
-                    document.getElementById('bal_huokuan').textContent = formatCurrency(balance['货款账户余额'] || 0);
-                    document.getElementById('bal_fanli').textContent = formatCurrency(balance['返利账户余额'] || 0);
-                    document.getElementById('bal_hexiao_cash').textContent = formatCurrency(balance['核销账户余额（金额）'] || 0);
-                    
-                    // 货返余额显示件数
-                    const goodsBalance = balance['核销账户余额（货返）'] || 0;
-                    document.getElementById('bal_hexiao_goods').textContent = `${goodsBalance} 件`;
-                } else {
-                    // 如果没有余额记录，显示0
-                    document.getElementById('bal_huokuan').textContent = formatCurrency(0);
-                    document.getElementById('bal_fanli').textContent = formatCurrency(0);
-                    document.getElementById('bal_hexiao_cash').textContent = formatCurrency(0);
-                    document.getElementById('bal_hexiao_goods').textContent = '0 件';
-                }
-                
-                // 2. 获取交易流水
-                const historyFilter = `CurrentValue.[客户ID] == "${customerId}"`;
-                const historyRecords = await searchTableRecords(CONFIG.TABLES.HISTORY, historyFilter);
-                
-                const historyList = document.getElementById('historyList');
-                const historyCount = document.getElementById('historyCount');
-                
-                // 更新记录数量
-                historyCount.textContent = `共 ${historyRecords.length} 条记录`;
-                
-                if (historyRecords.length === 0) {
-                    historyList.innerHTML = `
-                        <div class="p-8 text-center">
-                            <svg class="w-12 h-12 text-gray-400 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                            </svg>
-                            <p class="mt-2 text-gray-500">暂无变动明细</p>
-                        </div>
-                    `;
-                } else {
-                    // 按时间倒序排序
-                    historyRecords.sort((a, b) => {
-                        const timeA = new Date(a.fields['出入账时间'] || 0);
-                        const timeB = new Date(b.fields['出入账时间'] || 0);
-                        return timeB - timeA;
-                    });
-                    
-                    // 生成HTML
-                    let html = '';
-                    historyRecords.forEach((record, index) => {
-                        const fields = record.fields || {};
-                        const amount = fields['出入账数值'] || 0;
-                        const amountClass = amount >= 0 ? 'text-green-600' : 'text-red-600';
-                        const amountPrefix = amount >= 0 ? '+' : '';
-                        
-                        html += `
-                            <div class="p-4 flex justify-between items-center hover:bg-gray-50 transition ${index % 2 === 0 ? 'bg-gray-50' : ''}">
-                                <div class="flex-1">
-                                    <p class="font-bold text-gray-700">${fields['出入账类型'] || '变动'}</p>
-                                    <p class="text-xs text-gray-400">${formatDate(fields['出入账时间'])}</p>
-                                    ${fields['备注'] ? `<p class="text-xs text-gray-500 mt-1">${fields['备注']}</p>` : ''}
-                                </div>
-                                <div class="font-mono font-bold text-lg ${amountClass} ml-4">
-                                    ${amountPrefix}${formatCurrency(Math.abs(amount))}
-                                </div>
-                            </div>
-                        `;
-                    });
-                    
-                    historyList.innerHTML = html;
-                }
-                
-                // 更新最后更新时间
-                updateLastUpdateTime();
-                
-            } catch (error) {
-                console.error('刷新数据错误:', error);
-                showError('数据加载失败', `无法加载数据: ${error.message}`);
-            } finally {
-                // 恢复按钮状态
-                refreshBtn.disabled = false;
-                refreshBtnText.textContent = '刷新';
-                refreshSpinner.classList.add('hidden');
-            }
-        }
-        
-        // ==================== 初始化 ====================
-        
-        // 页面加载完成时执行
-        document.addEventListener('DOMContentLoaded', () => {
-            // 检查是否在飞书环境中
-            if (typeof tt !== 'undefined') {
-                console.log('飞书JS-SDK已加载，版本:', tt.SDKVersion);
-                
-                // 可以在这里添加飞书环境特定的初始化
-                // 例如：获取飞书用户信息、设置分享等
-            } else {
-                console.warn('不在飞书环境中，某些功能可能受限');
-                
-                // 在非飞书环境中，可以添加一些提示
-                const configAlert = document.createElement('div');
-                configAlert.className = 'bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4 mx-4 rounded';
-                configAlert.innerHTML = `
-                    <div class="flex">
-                        <div class="flex-shrink-0">
-                            <svg class="h-5 w-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
-                            </svg>
-                        </div>
-                        <div class="ml-3">
-                            <p class="text-sm text-yellow-700">
-                                当前不在飞书环境中，建议在飞书App内打开以获得最佳体验。
-                            </p>
-                        </div>
-                    </div>
-                `;
-                
-                const loginSection = document.getElementById('loginSection');
-                if (loginSection) {
-                    loginSection.insertBefore(configAlert, loginSection.firstChild);
-                }
-            }
-            
-            // 添加回车键登录支持
-            document.getElementById('password').addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') {
-                    handleLogin();
-                }
-            });
-            
-            // 初始更新时间
-            updateLastUpdateTime();
-        });
-        
-        // ==================== 环境检测 ====================
-        
-        // 检测是否在飞书环境中
-        function isInFeishu() {
-            return typeof tt !== 'undefined' && tt.request;
-        }
-        
-        // 获取当前环境信息
-        function getEnvironmentInfo() {
-            return {
-                inFeishu: isInFeishu(),
-                userAgent: navigator.userAgent,
-                platform: navigator.platform,
-                screenSize: `${window.innerWidth}x${window.innerHeight}`
-            };
-        }
-        
-        // 调试信息
-        console.log('环境信息:', getEnvironmentInfo());
-        console.log('应用配置:', CONFIG);
-    </script>
+    <script>
+        // ==================== 工具函数 ====================
+        
+        // 显示错误
+        function showError(title, message) {
+            document.getElementById('errorTitle').textContent = title;
+            document.getElementById('errorMessage').textContent = message;
+            document.getElementById('errorModal').classList.remove('hidden');
+        }
+        
+        // 隐藏错误
+        function hideError() {
+            document.getElementById('errorModal').classList.add('hidden');
+        }
+        
+        // 格式化金额
+        function formatCurrency(amount) {
+            if (amount === null || amount === undefined || isNaN(amount)) return '¥0.00';
+            return '¥' + amount.toLocaleString('zh-CN', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+        }
+        
+        // 格式化日期
+        function formatDate(dateString) {
+            if (!dateString) return '--';
+            try {
+                const date = new Date(dateString);
+                return date.toLocaleString('zh-CN', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            } catch (e) {
+                return dateString;
+            }
+        }
+        
+        // 更新最后更新时间
+        function updateLastUpdateTime() {
+            const now = new Date();
+            document.getElementById('lastUpdate').textContent = now.toLocaleString('zh-CN');
+        }
+        
+        // ==================== 飞书 API 函数 ====================
+        
+        // 使用飞书 SDK 的 tt.request 发送请求
+        async function feishuRequest(url, options = {}) {
+            return new Promise((resolve, reject) => {
+                // 检查是否在飞书环境中
+                if (typeof tt !== 'undefined' && tt.request) {
+                    // 在飞书环境中使用 tt.request
+                    tt.request({
+                        url: url,
+                        method: options.method || 'GET',
+                        header: options.headers || {},
+                        data: options.body ? JSON.parse(options.body) : {},
+                        success: (res) => {
+                            if (res.statusCode >= 200 && res.statusCode < 300) {
+                                try {
+                                    const data = typeof res.data === 'string' ? JSON.parse(res.data) : res.data;
+                                    resolve(data);
+                                } catch (e) {
+                                    resolve(res.data);
+                                }
+                            } else {
+                                reject(new Error(`请求失败: ${res.statusCode}`));
+                            }
+                        },
+                        fail: (err) => {
+                            reject(new Error(`网络请求失败: ${err.errMsg || '未知错误'}`));
+                        }
+                    });
+                } else {
+                    // 不在飞书环境中，使用 fetch（仅用于开发测试）
+                    console.warn('不在飞书环境中，使用fetch（可能遇到CORS问题）');
+                    fetch(url, options)
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error(`HTTP error! status: ${response.status}`);
+                            }
+                            return response.json();
+                        })
+                        .then(data => resolve(data))
+                        .catch(error => reject(error));
+                }
+            });
+        }
+        
+        // 获取租户访问令牌
+        async function getTenantToken() {
+            // 检查令牌是否有效（提前5分钟过期）
+            if (tenantToken && tokenExpiry && Date.now() < tokenExpiry) {
+                return tenantToken;
+            }
+            
+            try {
+                const data = await feishuRequest('https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        app_id: CONFIG.APP_ID,
+                        app_secret: CONFIG.APP_SECRET
+                    })
+                });
+                
+                if (data.code === 0) {
+                    tenantToken = data.tenant_access_token;
+                    // 令牌有效期设置为提前5分钟过期
+                    tokenExpiry = Date.now() + (data.expire - 300) * 1000;
+                    return tenantToken;
+                } else {
+                    throw new Error(`获取访问令牌失败: ${data.msg}`);
+                }
+            } catch (error) {
+                console.error('获取访问令牌错误:', error);
+                throw error;
+            }
+        }
+        
+        // 查询表格记录（使用飞书多维表格搜索API）
+        async function searchTableRecords(tableId, filter) {
+            try {
+                const token = await getTenantToken();
+                
+                const data = await feishuRequest(
+                    `https://open.feishu.cn/open-apis/bitable/v1/apps/${CONFIG.BASE_TOKEN}/tables/${tableId}/records/search`,
+                    {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            filter: filter
+                        })
+                    }
+                );
+                
+                if (data.code === 0) {
+                    return data.data.items || [];
+                } else {
+                    throw new Error(`查询表格记录失败: ${data.msg}`);
+                }
+            } catch (error) {
+                console.error('查询表格记录错误:', error);
+                throw error;
+            }
+        }
+        
+        // ==================== 业务逻辑函数 ====================
+        
+        // 处理登录
+        async function handleLogin() {
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value.trim();
+            const loginBtn = document.getElementById('loginBtn');
+            const loginBtnText = document.getElementById('loginBtnText');
+            const loginSpinner = document.getElementById('loginSpinner');
+            const loginMsg = document.getElementById('loginMsg');
+            
+            // 验证输入
+            if (!username || !password) {
+                loginMsg.textContent = '请填写账号和密码';
+                loginMsg.classList.remove('hidden');
+                return;
+            }
+            
+            // 设置加载状态
+            loginBtn.disabled = true;
+            loginBtnText.textContent = '验证中...';
+            loginSpinner.classList.remove('hidden');
+            loginMsg.classList.add('hidden');
+            
+            try {
+                // 获取访问令牌
+                await getTenantToken();
+                
+                // 构建筛选条件 - 注意字段名必须与表格中的完全一致
+                // 假设表格中的字段名为："账号" 和 "密码"（使用全角括号）
+                const filter = `CurrentValue.[账号] == "${username}" && CurrentValue.[密码] == "${password}"`;
+                
+                // 查询用户记录
+                const users = await searchTableRecords(CONFIG.TABLES.USER, filter);
+                
+                if (users.length > 0) {
+                    currentUser = users[0].fields;
+                    await showDashboard();
+                } else {
+                    loginMsg.textContent = '账号或密码不匹配，请核对表格数据';
+                    loginMsg.classList.remove('hidden');
+                }
+            } catch (error) {
+                console.error('登录错误:', error);
+                loginMsg.textContent = `登录失败: ${error.message}`;
+                loginMsg.classList.remove('hidden');
+            } finally {
+                // 恢复按钮状态
+                loginBtn.disabled = false;
+                loginBtnText.textContent = '立即登录';
+                loginSpinner.classList.add('hidden');
+            }
+        }
+        
+        // 显示主面板
+        async function showDashboard() {
+            // 切换页面
+            document.getElementById('loginSection').classList.add('hidden');
+            document.getElementById('mainSection').classList.remove('hidden');
+            
+            // 显示用户信息
+            document.getElementById('displayName').textContent = currentUser['客户名称'] || '用户';
+            document.getElementById('customerId').textContent = currentUser['客户ID'] || '--';
+            
+            // 加载数据
+            await refreshData();
+        }
+        
+        // 刷新数据
+        async function refreshData() {
+            const refreshBtn = document.getElementById('refreshBtn');
+            const refreshBtnText = document.getElementById('refreshBtnText');
+            const refreshSpinner = document.getElementById('refreshSpinner');
+            
+            // 设置加载状态
+            refreshBtn.disabled = true;
+            refreshBtnText.textContent = '刷新中...';
+            refreshSpinner.classList.remove('hidden');
+            
+            try {
+                if (!currentUser || !currentUser['客户ID']) {
+                    throw new Error('用户信息不完整');
+                }
+                
+                const customerId = currentUser['客户ID'];
+                
+                // 1. 获取余额数据
+                const balanceFilter = `CurrentValue.[客户ID] == "${customerId}"`;
+                const balanceRecords = await searchTableRecords(CONFIG.TABLES.BALANCE, balanceFilter);
+                
+                if (balanceRecords.length > 0) {
+                    const balance = balanceRecords[0].fields;
+                    
+                    // 更新余额显示 - 注意字段名必须与表格中的完全一致
+                    document.getElementById('bal_huokuan').textContent = formatCurrency(balance['货款账户余额'] || 0);
+                    document.getElementById('bal_fanli').textContent = formatCurrency(balance['返利账户余额'] || 0);
+                    document.getElementById('bal_hexiao_cash').textContent = formatCurrency(balance['核销账户余额（金额）'] || 0);
+                    
+                    // 货返余额显示件数
+                    const goodsBalance = balance['核销账户余额（货返）'] || 0;
+                    document.getElementById('bal_hexiao_goods').textContent = `${goodsBalance} 件`;
+                } else {
+                    // 如果没有余额记录，显示0
+                    document.getElementById('bal_huokuan').textContent = formatCurrency(0);
+                    document.getElementById('bal_fanli').textContent = formatCurrency(0);
+                    document.getElementById('bal_hexiao_cash').textContent = formatCurrency(0);
+                    document.getElementById('bal_hexiao_goods').textContent = '0 件';
+                }
+                
+                // 2. 获取交易流水
+                const historyFilter = `CurrentValue.[客户ID] == "${customerId}"`;
+                const historyRecords = await searchTableRecords(CONFIG.TABLES.HISTORY, historyFilter);
+                
+                const historyList = document.getElementById('historyList');
+                const historyCount = document.getElementById('historyCount');
+                
+                // 更新记录数量
+                historyCount.textContent = `共 ${historyRecords.length} 条记录`;
+                
+                if (historyRecords.length === 0) {
+                    historyList.innerHTML = `
+                        <div class="p-8 text-center">
+                            <svg class="w-12 h-12 text-gray-400 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                            </svg>
+                            <p class="mt-2 text-gray-500">暂无变动明细</p>
+                        </div>
+                    `;
+                } else {
+                    // 按时间倒序排序
+                    historyRecords.sort((a, b) => {
+                        const timeA = new Date(a.fields['出入账时间'] || 0);
+                        const timeB = new Date(b.fields['出入账时间'] || 0);
+                        return timeB - timeA;
+                    });
+                    
+                    // 生成HTML
+                    let html = '';
+                    historyRecords.forEach((record, index) => {
+                        const fields = record.fields || {};
+                        const amount = fields['出入账数值'] || 0;
+                        const amountClass = amount >= 0 ? 'text-green-600' : 'text-red-600';
+                        const amountPrefix = amount >= 0 ? '+' : '';
+                        
+                        html += `
+                            <div class="p-4 flex justify-between items-center hover:bg-gray-50 transition ${index % 2 === 0 ? 'bg-gray-50' : ''}">
+                                <div class="flex-1">
+                                    <p class="font-bold text-gray-700">${fields['出入账类型'] || '变动'}</p>
+                                    <p class="text-xs text-gray-400">${formatDate(fields['出入账时间'])}</p>
+                                    ${fields['备注'] ? `<p class="text-xs text-gray-500 mt-1">${fields['备注']}</p>` : ''}
+                                </div>
+                                <div class="font-mono font-bold text-lg ${amountClass} ml-4">
+                                    ${amountPrefix}${formatCurrency(Math.abs(amount))}
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    historyList.innerHTML = html;
+                }
+                
+                // 更新最后更新时间
+                updateLastUpdateTime();
+                
+            } catch (error) {
+                console.error('刷新数据错误:', error);
+                showError('数据加载失败', `无法加载数据: ${error.message}`);
+            } finally {
+                // 恢复按钮状态
+                refreshBtn.disabled = false;
+                refreshBtnText.textContent = '刷新';
+                refreshSpinner.classList.add('hidden');
+            }
+        }
+        
+        // ==================== 初始化 ====================
+        
+        // 页面加载完成时执行
+        document.addEventListener('DOMContentLoaded', () => {
+            // 检查是否在飞书环境中
+            if (typeof tt !== 'undefined') {
+                console.log('飞书JS-SDK已加载，版本:', tt.SDKVersion);
+                
+                // 可以在这里添加飞书环境特定的初始化
+                // 例如：获取飞书用户信息、设置分享等
+            } else {
+                console.warn('不在飞书环境中，某些功能可能受限');
+                
+                // 在非飞书环境中，可以添加一些提示
+                const configAlert = document.createElement('div');
+                configAlert.className = 'bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4 mx-4 rounded';
+                configAlert.innerHTML = `
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <svg class="h-5 w-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm text-yellow-700">
+                                当前不在飞书环境中，建议在飞书App内打开以获得最佳体验。
+                            </p>
+                        </div>
+                    </div>
+                `;
+                
+                const loginSection = document.getElementById('loginSection');
+                if (loginSection) {
+                    loginSection.insertBefore(configAlert, loginSection.firstChild);
+                }
+            }
+            
+            // 添加回车键登录支持
+            document.getElementById('password').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    handleLogin();
+                }
+            });
+            
+            // 初始更新时间
+            updateLastUpdateTime();
+        });
+        
+        // ==================== 环境检测 ====================
+        
+        // 检测是否在飞书环境中
+        function isInFeishu() {
+            return typeof tt !== 'undefined' && tt.request;
+        }
+        
+        // 获取当前环境信息
+        function getEnvironmentInfo() {
+            return {
+                inFeishu: isInFeishu(),
+                userAgent: navigator.userAgent,
+                platform: navigator.platform,
+                screenSize: `${window.innerWidth}x${window.innerHeight}`
+            };
+        }
+        
+        // 调试信息
+        console.log('环境信息:', getEnvironmentInfo());
+        console.log('应用配置:', CONFIG);
+    </script>
 </body>
 </html>
