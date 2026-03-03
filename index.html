@@ -5,27 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>经销商资金管理系统</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        .loading-spinner {
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #3b82f6;
-            border-radius: 50%;
-            width: 24px;
-            height: 24px;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .fade-in { animation: fadeIn 0.3s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-    </style>
 </head>
-<body class="bg-gray-50 min-h-screen">
+<body class="bg-gray-50 min-h-screen font-sans">
     <script>
         const CONFIG = {
-            APP_ID: 'cli_a92c65188778dbc4',
-            BASE_TOKEN: 'HT8hbDug1aalOEslDBfc2KQgnmb',
-            // 你的 Vercel 后端地址 (确保末尾没有多余斜杠)
-            BACKEND_URL: 'https://money-manager1-3mf5khru2-xinxintuo7-6954s-projects.vercel.app',
+            // 确保这里包含 /api
+            BACKEND_URL: 'https://money-manager1-3mf5khru2-xinxintuo7-6954s-projects.vercel.app/api',
             TABLES: {
                 USER: 'tblSKgu3DkAo8X5g',
                 BALANCE: 'tbl8oK0Zl6TzsAE6',
@@ -34,148 +19,80 @@
         };
         
         let currentUser = null;
-        let tenantToken = null;
-        let tokenExpiry = null;
-    </script>
 
-    <div id="loginSection" class="flex items-center justify-center h-screen fade-in">
-        <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-md">
-            <h1 class="text-2xl font-bold text-center mb-6 text-blue-600">经销商系统登录</h1>
-            <div class="space-y-4">
-                <input type="text" id="username" placeholder="数字账号" class="w-full p-3 border rounded-lg focus:outline-blue-500">
-                <input type="password" id="password" placeholder="密码" class="w-full p-3 border rounded-lg focus:outline-blue-500">
-                <button onclick="handleLogin()" id="loginBtn" class="w-full bg-blue-600 text-white p-3 rounded-lg font-bold hover:bg-blue-700 transition flex justify-center items-center">
-                    <span id="loginBtnText">立即登录</span>
-                    <div id="loginSpinner" class="hidden loading-spinner ml-2"></div>
-                </button>
-            </div>
-            <p id="loginMsg" class="mt-4 text-center text-red-500 hidden"></p>
-        </div>
-    </div>
-
-    <div id="mainSection" class="hidden container mx-auto p-4 max-w-4xl fade-in">
-        <header class="flex justify-between items-center mb-6">
-            <div>
-                <h2 class="text-xl font-bold text-gray-800">欢迎，<span id="displayName">--</span></h2>
-                <p class="text-sm text-gray-500">ID: <span id="customerId">--</span></p>
-            </div>
-            <button onclick="location.reload()" class="bg-gray-200 px-4 py-2 rounded-lg text-sm">退出</button>
-        </header>
-
-        <div class="grid grid-cols-2 gap-4 mb-8">
-            <div class="bg-blue-500 p-4 rounded-xl text-white">
-                <p class="text-xs opacity-80">货款余额</p>
-                <p class="text-xl font-bold" id="bal_huokuan">¥0.00</p>
-            </div>
-            <div class="bg-green-500 p-4 rounded-xl text-white">
-                <p class="text-xs opacity-80">返利余额</p>
-                <p class="text-xl font-bold" id="bal_fanli">¥0.00</p>
-            </div>
-        </div>
-
-        <div class="bg-white rounded-xl shadow-md overflow-hidden">
-            <div class="p-4 border-b bg-gray-50 font-bold">资金变动明细</div>
-            <div id="historyList" class="divide-y max-h-96 overflow-y-auto">
-                <p class="p-8 text-center text-gray-400">正在加载...</p>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        // 获取 Token 的核心逻辑
-        async function getTenantToken() {
-            if (tenantToken && tokenExpiry && Date.now() < tokenExpiry) return tenantToken;
-            
-            try {
-                const response = await fetch(`${CONFIG.BACKEND_URL}/get-token`, { 
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' }
-                });
-                
-                if (!response.ok) throw new Error(`HTTP 错误: ${response.status}`);
-                
-                const data = await response.json();
-                if (data.code === 0 || data.tenant_access_token) {
-                    tenantToken = data.tenant_access_token;
-                    tokenExpiry = Date.now() + 7000 * 1000;
-                    return tenantToken;
-                }
-                throw new Error(data.msg || '获取Token失败');
-            } catch (error) {
-                console.error('Token获取异常:', error);
-                throw new Error('无法连接到授权服务器，请检查网络或后端状态');
-            }
-        }
-
+        // 统一的查询函数
         async function apiRequest(tableId, filter) {
-            const token = await getTenantToken();
-            const url = `https://open.feishu.cn/open-apis/bitable/v1/apps/${CONFIG.BASE_TOKEN}/tables/${tableId}/records/search`;
-            
-            const response = await fetch(url, {
+            const response = await fetch(`${CONFIG.BACKEND_URL}/query-bitable`, {
                 method: 'POST',
-                headers: { 
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ filter: filter })
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tableId, filter })
             });
+            if (!response.ok) throw new Error('网络请求失败，请检查后端');
             const data = await response.json();
             return data.data?.items || [];
         }
 
         async function handleLogin() {
-            const userInp = document.getElementById('username').value.trim();
-            const passInp = document.getElementById('password').value.trim();
+            const u = document.getElementById('username').value.trim();
+            const p = document.getElementById('password').value.trim();
             const msg = document.getElementById('loginMsg');
-            
-            if (!userInp || !passInp) { msg.textContent = '请输入账号密码'; msg.classList.remove('hidden'); return; }
 
-            document.getElementById('loginBtn').disabled = true;
-            document.getElementById('loginSpinner').classList.remove('hidden');
-            msg.classList.add('hidden');
+            if (!u || !p) { alert('请输入账号密码'); return; }
+            msg.innerText = "验证中...";
 
             try {
-                const filter = `CurrentValue.[账号] == "${userInp}" && CurrentValue.[密码] == "${passInp}"`;
-                const users = await apiRequest(CONFIG.TABLES.USER, filter);
-                
+                // 通过后端查询用户信息
+                const users = await apiRequest(CONFIG.TABLES.USER, `CurrentValue.[账号] == "${u}" && CurrentValue.[密码] == "${p}"`);
                 if (users.length > 0) {
                     currentUser = users[0].fields;
                     showDashboard();
                 } else {
-                    msg.textContent = '账号或密码错误';
-                    msg.classList.remove('hidden');
+                    msg.innerText = "账号或密码错误";
                 }
             } catch (e) {
-                msg.textContent = e.message;
-                msg.classList.remove('hidden');
-            } finally {
-                document.getElementById('loginBtn').disabled = false;
-                document.getElementById('loginSpinner').classList.add('hidden');
+                msg.innerText = "登录异常: " + e.message;
             }
         }
 
         function showDashboard() {
-            document.getElementById('loginSection').classList.add('hidden');
+            document.getElementById('loginSection').style.display = 'none';
             document.getElementById('mainSection').classList.remove('hidden');
-            document.getElementById('displayName').textContent = currentUser['客户名称'];
-            document.getElementById('customerId').textContent = currentUser['客户ID'];
+            document.getElementById('displayName').innerText = currentUser['客户名称'];
             refreshData();
         }
 
         async function refreshData() {
-            try {
-                const id = currentUser['客户ID'];
-                const balance = await apiRequest(CONFIG.TABLES.BALANCE, `CurrentValue.[客户ID] == "${id}"`);
-                if (balance.length > 0) {
-                    document.getElementById('bal_huokuan').textContent = `¥${balance[0].fields['货款账户余额'] || 0}`;
-                    document.getElementById('bal_fanli').textContent = `¥${balance[0].fields['返利账户余额'] || 0}`;
-                }
-                const history = await apiRequest(CONFIG.TABLES.HISTORY, `CurrentValue.[客户ID] == "${id}"`);
-                document.getElementById('historyList').innerHTML = history.length ? 
-                    history.map(h => `<div class="p-4 flex justify-between"><span>${h.fields['出入账类型']}</span><span class="font-bold">${h.fields['出入账数值']}</span></div>`).join('') : 
-                    '<p class="p-8 text-center text-gray-400">暂无数据</p>';
-            } catch (e) { console.error(e); }
+            const id = currentUser['客户ID'];
+            const balances = await apiRequest(CONFIG.TABLES.BALANCE, `CurrentValue.[客户ID] == "${id}"`);
+            if (balances.length > 0) {
+                document.getElementById('bal_huokuan').innerText = '¥' + (balances[0].fields['货款账户余额'] || 0);
+                document.getElementById('bal_fanli').innerText = '¥' + (balances[0].fields['返利账户余额'] || 0);
+            }
         }
     </script>
+
+    <div id="loginSection" class="flex items-center justify-center h-screen">
+        <div class="bg-white p-8 rounded-xl shadow-lg w-80">
+            <h1 class="text-xl font-bold text-center mb-6">经销商登录</h1>
+            <input type="text" id="username" placeholder="账号" class="w-full p-2 border mb-4 rounded">
+            <input type="password" id="password" placeholder="密码" class="w-full p-2 border mb-6 rounded">
+            <button onclick="handleLogin()" class="w-full bg-blue-600 text-white py-2 rounded font-bold">立即登录</button>
+            <p id="loginMsg" class="text-red-500 text-sm mt-4 text-center"></p>
+        </div>
+    </div>
+
+    <div id="mainSection" class="hidden p-6 max-w-md mx-auto">
+        <h2 class="text-lg mb-6">欢迎，<span id="displayName" class="font-bold"></span></h2>
+        <div class="space-y-4">
+            <div class="bg-blue-600 p-4 rounded-xl text-white">
+                <p class="text-sm opacity-80">货款余额</p>
+                <p id="bal_huokuan" class="text-2xl font-bold">¥0.00</p>
+            </div>
+            <div class="bg-green-600 p-4 rounded-xl text-white">
+                <p class="text-sm opacity-80">返利余额</p>
+                <p id="bal_fanli" class="text-2xl font-bold">¥0.00</p>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
