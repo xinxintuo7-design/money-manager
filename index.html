@@ -6,28 +6,35 @@
     <title>经销商资金管理系统</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-50 flex items-center justify-center h-screen">
+<body class="bg-gray-100 flex items-center justify-center h-screen">
+    <div class="bg-white p-8 rounded-2xl shadow-xl w-80">
+        <h1 class="text-xl font-bold text-center mb-6">经销商系统登录</h1>
+        <input type="text" id="username" placeholder="账号" class="w-full p-3 border rounded-lg mb-4 outline-none">
+        <input type="password" id="password" placeholder="密码" class="w-full p-3 border rounded-lg mb-6 outline-none">
+        <button onclick="handleLogin()" id="loginBtn" class="w-full bg-blue-600 text-white p-3 rounded-lg font-bold hover:bg-blue-700 transition-all">登录系统</button>
+        <p id="loginMsg" class="mt-4 text-center text-sm text-red-500"></p>
+    </div>
+
     <script>
         const CONFIG = {
-            // 修正：后端地址最后不要加 /api，我们在 apiRequest 里手动加
-            BACKEND_URL: 'https://money-manager1.vercel.app',
-            TABLES: {
-                USER: 'tblSKgu3DkAo8X5g',
-                BALANCE: 'tbl8oK0Zl6TzsAE6'
-            }
+            // 使用你的永久域名
+            BACKEND_URL: 'https://money-manager1.vercel.app/api/query-bitable',
+            TABLES: { USER: 'tblSKgu3DkAo8X5g' }
         };
 
         async function handleLogin() {
             const u = document.getElementById('username').value.trim();
             const p = document.getElementById('password').value.trim();
             const msg = document.getElementById('loginMsg');
+            const btn = document.getElementById('loginBtn');
 
             if (!u || !p) { msg.innerText = '请输入账号密码'; return; }
-            msg.innerText = '连接中...';
+            
+            btn.disabled = true;
+            msg.innerText = '正在建立安全连接...';
 
             try {
-                // 这里手动拼接 /api/query-bitable
-                const response = await fetch(`${CONFIG.BACKEND_URL}/api/query-bitable`, {
+                const response = await fetch(CONFIG.BACKEND_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ 
@@ -37,29 +44,18 @@
                 });
 
                 const data = await response.json();
-                
                 if (data.data?.items?.length > 0) {
-                    const user = data.data.items[0].fields;
                     msg.style.color = 'green';
-                    msg.innerText = `欢迎，${user['客户名称']}！正在加载余额...`;
-                    // 登录成功后的跳转逻辑可以在此继续
+                    msg.innerText = '验证成功！欢迎使用。';
                 } else {
-                    msg.style.color = 'red';
-                    msg.innerText = '账号或密码不正确';
+                    msg.innerText = '账号或密码错误';
                 }
             } catch (error) {
-                msg.style.color = 'red';
-                msg.innerText = '连接失败: 服务器未响应，请检查 Vercel 状态';
+                msg.innerText = '连接服务器失败，请检查网络或后端状态';
+            } finally {
+                btn.disabled = false;
             }
         }
     </script>
-
-    <div class="bg-white p-8 rounded-2xl shadow-xl w-80">
-        <h1 class="text-xl font-bold text-center mb-6">经销商系统登录</h1>
-        <input type="text" id="username" placeholder="账号" class="w-full p-3 border rounded-lg mb-4 outline-none">
-        <input type="password" id="password" placeholder="密码" class="w-full p-3 border rounded-lg mb-6 outline-none">
-        <button onclick="handleLogin()" class="w-full bg-blue-600 text-white p-3 rounded-lg font-bold">登录</button>
-        <p id="loginMsg" class="mt-4 text-center text-sm text-gray-500"></p>
-    </div>
 </body>
 </html>
